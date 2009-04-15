@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 #use Test::More 'no_plan';
-use Test::More tests => 12;
+use Test::More tests => 13;
 use Test::Differences;
 use Test::Exception;
 
@@ -63,6 +63,9 @@ sub main {
 	# test older
 	ok(File::is->older($fn2, $fn1), 'file2 is older then file1');
 	ok(!File::is->older($fn3, $fn1), 'file3 was create last can not be older than file1');
+
+	# test die
+	dies_ok { File::is->older($fn2, 'non-existing' ) } 'die with non existing file';
 	
 	return 0;
 }

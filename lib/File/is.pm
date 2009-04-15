@@ -2,7 +2,7 @@ package File::is;
 
 =head1 NAME
 
-File::is - file is older? is newer?
+File::is - file is older? oldest? is newer? newest? similar? the same?
 
 =head1 VERSION
 
@@ -16,7 +16,22 @@ use strict;
 our $VERSION = '0.01';
 
 use Carp;
-use File::stat;
+
+our %stat_map = (
+    'dev'     => 0,
+    'ino'     => 1,
+    'mode'    => 2,
+    'nlink'   => 3,
+    'uid'     => 4,
+    'gid'     => 5,
+    'rdev'    => 6,
+    'size'    => 7,
+    'atime'   => 8,
+    'mtime'   => 9,
+    'ctime'   => 10,
+    'blksize' => 11,
+    'blocks'  => 12,
+);
 
 =head1 SYNOPSIS
 
@@ -38,26 +53,25 @@ A portable (hopefully) way to check if file is older or newer than other files.
 
 =cut
 
-sub _cmp_mtime {
+sub _cmp_stat {
     my $class    = shift;
     my $cmp_func = shift;
     my $file1 = _construct_filename(shift);
     my @files = @_;
     
-    my $file1_stat = stat($file1);
+    my @file1_stat = stat($file1);
     croak 'file "'.$file1.'" not reachable'
-        if not $file1_stat;
-    my $file1_mtime = $file1_stat->mtime;
-    
+        if not @file1_stat;
+
     foreach my $file (@files) {
         $file = _construct_filename($file);
-        my $file_stat = stat($file);
+        my @file_stat = stat($file);
         croak 'file "'.$file.'" not reachable'
-            if not $file_stat;
+            if not @file_stat;
         
         # return success if condition is met
         return 1
-            if $cmp_func->($file1_mtime, $file_stat->mtime);
+            if $cmp_func->(\@file1_stat, \@file_stat);
     }
     
     # no file was newer
@@ -65,11 +79,27 @@ sub _cmp_mtime {
 }
 
 sub newer {
-    return shift->_cmp_mtime(sub { $_[0] > $_[1] }, @_);
+    return shift->_cmp_stat(sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
+}
+
+sub newest {
+    # FIXME
 }
 
 sub older {
-    return shift->_cmp_mtime(sub { $_[0] < $_[1] }, @_);
+    return shift->_cmp_stat(sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
+}
+
+sub oldest {
+    # FIXME
+}
+
+sub similar {
+    # FIXME
+}
+
+sub thesame {
+    # FIXME
 }
 
 sub _construct_filename {
