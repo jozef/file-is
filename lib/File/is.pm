@@ -55,6 +55,7 @@ A portable (hopefully) way to check if file is older or newer than other files.
 
 sub _cmp_stat {
     my $class    = shift;
+    my $return   = shift;
     my $cmp_func = shift;
     my $file1 = _construct_filename(shift);
     my @files = @_;
@@ -70,28 +71,28 @@ sub _cmp_stat {
             if not @file_stat;
         
         # return success if condition is met
-        return 1
+        return $return
             if $cmp_func->(\@file1_stat, \@file_stat);
     }
     
     # no file was newer
-    return;
+    return not $return;
 }
 
 sub newer {
-    return shift->_cmp_stat(sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
 }
 
 sub newest {
-    # FIXME
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
 }
 
 sub older {
-    return shift->_cmp_stat(sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
 }
 
 sub oldest {
-    # FIXME
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
 }
 
 sub similar {

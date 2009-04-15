@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 #use Test::More 'no_plan';
-use Test::More tests => 13;
+use Test::More tests => 19;
 use Test::Differences;
 use Test::Exception;
 
@@ -54,15 +54,26 @@ sub main {
 	
 	# test newer
 	ok(!File::is->newer($fn1, $fn2, $fn3), 'file1 was created as first cannot be newer');
+	utime time(), time()-5, $fn1;
 	utime time(), time()-10, $fn2;
 	ok(!File::is->newer($fn1, $fn3), 'file1 still not never then file3');
 	ok(!File::is->newer($fn1, [ $tfolder, 'sub3', 'sub4', 'f3' ]), 'file1 still not never then file3');
 	ok(File::is->newer($fn1, $fn2), 'but newer than file2 ( time()-10 )');
 	ok(File::is->newer([ $tfolder, 'sub', 'sub', '..', 'sub', 'f1' ], [ $tfolder, 'sub1', 'sub2', 'f2' ]), 'but newer than file2 ( time()-10 )');
+	
+	# test newest
+	ok(File::is->newest($fn3, $fn2, $fn1), 'file2 is newset of them');
+	ok(!File::is->newest($fn2, $fn1, $fn3), 'file3 is NOT newset of them');
+	ok(!File::is->newest($fn1, $fn3, $fn2), 'file1 is NOT newset of them');
 
 	# test older
 	ok(File::is->older($fn2, $fn1), 'file2 is older then file1');
-	ok(!File::is->older($fn3, $fn1), 'file3 was create last can not be older than file1');
+	ok(!File::is->older($fn3, $fn1), 'file3 not older than file1');
+
+	# test oldest
+	ok(File::is->oldest($fn2, $fn1, $fn3), 'file2 is oldest of them');
+	ok(!File::is->oldest($fn3, $fn1, $fn2), 'file3 is NOT oldest of them');
+	ok(!File::is->oldest($fn1, $fn3, $fn2), 'file1 is NOT oldest of them');
 
 	# test die
 	dies_ok { File::is->older($fn2, 'non-existing' ) } 'die with non existing file';
