@@ -17,6 +17,7 @@ our $VERSION = '0.01';
 
 use Carp;
 use Readonly;
+use File::Spec;
 
 #my $stat_dev     = 0;
 #my $stat_mode    = 2;
@@ -66,27 +67,27 @@ is:
 =head2 newer($primary_filename, $other_filename, $other_filename2, ...)
 
 Returns true/false if the C<$primary_filename> is newer (has modification
-timestamp recent) then any of the rest passed as argument.
+time-stamp recent) then any of the rest passed as argument.
 
 =head2 newest($primary_filename, $other_filename, $other_filename2, ...)
 
 Returns true/false if the C<$primary_filename> is newest (has the biggest
-modification timestamp) compared to the rest of the passed filenames.
+modification time-stamp) compared to the rest of the passed filenames.
 
 =head2 older($primary_filename, $other_filename, $other_filename2, ...)
 
 Returns true/false if the C<$primary_filename> is older (has the later
-modification timestamp) then any of the rest passed as argument.
+modification time-stamp) then any of the rest passed as argument.
 
 =head2 oldest($primary_filename, $other_filename, $other_filename2, ...)
 
 Returns true/false if the C<$primary_filename> is oldest (has the latest
-modification timestamp) compared to the rest of the passed filenames.
+modification time-stamp) compared to the rest of the passed filenames.
 
 =head2 similar($primary_filename, $other_filename, $other_filename2, ...)
 
 Returns true/false if the C<$primary_filename> has the same size and modification
-timestamp than any of the rest of the passed filenames.
+time-stamp than any of the rest of the passed filenames.
 
 =head2 thesame($primary_filename, $other_filename, $other_filename2, ...)
 
@@ -177,7 +178,7 @@ Example:
     _construct_filename([ 'folder', 'file' ]) => File::Spec->catfile('folder', 'file');
     _construct_filename('folder', 'file')     => File::Spec->catfile('folder', 'file');
 
-This function is called on every argument passed to comparision methods
+This function is called on every argument passed to cmp methods
 (newer, smaller, older, ...).
 
 =cut
@@ -195,7 +196,7 @@ sub _construct_filename {
 =head2 _cmp_stat($class, $return_value_if_match, $cmp_function, $primary_filename, $other_filename, $other_filename2, ...)
 
 This function is called by all of the public C<newer()>, C<smaller()>, C<older()>,
-... methods do loop through files and do some comparism on them.
+... methods do loop through files and do some cmp on them.
 
 =cut
 
@@ -265,6 +266,8 @@ L<http://cpanratings.perl.org/d/File-is>
 =item * Search CPAN
 
 L<http://search.cpan.org/dist/File-is>
+
+=back
 
 =head1 COPYRIGHT
 

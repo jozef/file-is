@@ -5,7 +5,6 @@ use warnings;
 
 #use Test::More 'no_plan';
 use Test::More tests => 31;
-use Test::Differences;
 use Test::Exception;
 
 use File::Temp 'tempdir';
