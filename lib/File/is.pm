@@ -47,9 +47,147 @@ our %stat_map = (
 
 =head1 DESCRIPTION
 
-A portable (hopefully) way to check if file is older or newer than other files.
+This module is a result of /me not wanting to write:
+
+    if ($(stat('filename'))[9] < $(stat('tmp/other-filename'))[9]) { do_someting(); };
+
+Instead I wrote a module with ~80 lines of code and ~90 lines of tests
+for it... So how is the module different from the above C<if>? Should be
+reusable, has more functionality, should be clear from the code it self
+what the condition is doing and was fun to play with it. Another advantage
+is that the file names can be passed as array refs. In this case
+L<File::Spec/catfile> is used to construct the filename. The resulting code
+is:
+
+    if (File::is->older('filename', [ 'tmp', 'other-filename' ])) { do_something(); };
 
 =head1 FUNCTIONS
+
+=head2 newer($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is newer (has modification
+timestamp recent) then any of the rest passed as argument.
+
+=head2 newest($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is newest (has the biggest
+modification timestamp) compared to the rest of the passed filenames.
+
+=head2 older($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is older (has the later
+modification timestamp) then any of the rest passed as argument.
+
+=head2 oldest($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is oldest (has the latest
+modification timestamp) compared to the rest of the passed filenames.
+
+=head2 similar($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> has the same size and modification
+timestamp than any of the rest of the passed filenames.
+
+=head2 thesame($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> has the same inode (is hard link)
+to any of the rest of the passed filenames.
+
+=head2 bigger($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is bigger (has the bigger
+size) then any of the rest passed as argument.
+
+=head2 biggest($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is biggest (has the biggest
+size) compared to the rest of the passed filenames.
+
+=head2 smaller($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is smaller (has the smaller
+size) then any of the rest passed as argument.
+
+=head2 smallest($primary_filename, $other_filename, $other_filename2, ...)
+
+Returns true/false if the C<$primary_filename> is smallest (has the smallest
+size) compared to the rest of the passed filenames.
+
+=cut
+
+sub newer {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
+}
+sub newest {
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] <= $_[1]->[$stat_map{'mtime'}] }, @_);
+}
+sub older {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
+}
+sub oldest {
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] >= $_[1]->[$stat_map{'mtime'}] }, @_);
+}
+sub similar {
+    return shift->_cmp_stat(
+        1,
+        sub {
+            $_[0]->[$stat_map{'size'}] == $_[1]->[$stat_map{'size'}]
+            and $_[0]->[$stat_map{ 'mtime'}] == $_[1]->[$stat_map{'mtime'}]
+        },
+        @_
+    );
+}
+sub thesame {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'ino'}] == $_[1]->[$stat_map{'ino'}] }, @_);
+}
+sub bigger {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] > $_[1]->[$stat_map{'size'}] }, @_);
+}
+sub biggest {
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] <= $_[1]->[$stat_map{'size'}] }, @_);
+}
+sub smaller {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] < $_[1]->[$stat_map{'size'}] }, @_);
+}
+sub smallest {
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] >= $_[1]->[$stat_map{'size'}] }, @_);
+}
+
+=head1 INTERNALS
+
+Call/use at your own risk ;-)
+
+=head2 _construct_filename()
+
+Accepts one or more arguments. It passes them to C<<File::Spec->catfile()>>
+dereferencing the array if one argument array ref is passed.
+
+Example:
+
+    _construct_filename('file')               => 'file'
+    _construct_filename([ 'folder', 'file' ]) => File::Spec->catfile('folder', 'file');
+    _construct_filename('folder', 'file')     => File::Spec->catfile('folder', 'file');
+
+This function is called on every argument passed to comparision methods
+(newer, smaller, older, ...).
+
+=cut
+
+sub _construct_filename {
+    croak 'need at least one argument'
+        if @_ == 0;
+    
+    return File::Spec->catfile(@{$_[0]})
+        if (@_ == 1) and (ref $_[0] eq 'ARRAY');
+    
+    return File::Spec->catfile(@_);
+}
+
+
+=head2 _cmp_stat($class, $return_value_if_match, $cmp_function, $primary_filename, $other_filename, $other_filename2, ...)
+
+This function is called by all of the public C<newer()>, C<smaller()>, C<older()>,
+... methods do loop through files and do some comparism on them.
 
 =cut
 
@@ -77,63 +215,6 @@ sub _cmp_stat {
     
     # no file was newer
     return not $return;
-}
-
-sub newer {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
-}
-
-sub newest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] <= $_[1]->[$stat_map{'mtime'}] }, @_);
-}
-
-sub older {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
-}
-
-sub oldest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] >= $_[1]->[$stat_map{'mtime'}] }, @_);
-}
-
-sub similar {
-    return shift->_cmp_stat(
-        1,
-        sub {
-            $_[0]->[$stat_map{'size'}] == $_[1]->[$stat_map{'size'}]
-            and $_[0]->[$stat_map{ 'mtime'}] == $_[1]->[$stat_map{'mtime'}]
-        },
-        @_
-    );
-}
-
-sub thesame {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'ino'}] != $_[1]->[$stat_map{'ino'}] }, @_);
-}
-
-sub bigger {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] > $_[1]->[$stat_map{'size'}] }, @_);
-}
-
-sub biggest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] <= $_[1]->[$stat_map{'size'}] }, @_);
-}
-
-sub smaller {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] < $_[1]->[$stat_map{'size'}] }, @_);
-}
-
-sub smallest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] >= $_[1]->[$stat_map{'size'}] }, @_);
-}
-
-sub _construct_filename {
-    croak 'need at least one argument'
-        if @_ == 0;
-    
-    return File::Spec->catfile(@{$_[0]})
-        if (@_ == 1) and (ref $_[0] eq 'ARRAY');
-    
-    return File::Spec->catfile(@_);
 }
 
 =head1 AUTHOR
