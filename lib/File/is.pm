@@ -84,7 +84,7 @@ sub newer {
 }
 
 sub newest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] <= $_[1]->[$stat_map{'mtime'}] }, @_);
 }
 
 sub older {
@@ -92,15 +92,38 @@ sub older {
 }
 
 sub oldest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] >= $_[1]->[$stat_map{'mtime'}] }, @_);
 }
 
 sub similar {
-    # FIXME
+    return shift->_cmp_stat(
+        1,
+        sub {
+            $_[0]->[$stat_map{'size'}] == $_[1]->[$stat_map{'size'}]
+            and $_[0]->[$stat_map{ 'mtime'}] == $_[1]->[$stat_map{'mtime'}]
+        },
+        @_
+    );
 }
 
 sub thesame {
-    # FIXME
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'ino'}] != $_[1]->[$stat_map{'ino'}] }, @_);
+}
+
+sub bigger {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] > $_[1]->[$stat_map{'size'}] }, @_);
+}
+
+sub biggest {
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] <= $_[1]->[$stat_map{'size'}] }, @_);
+}
+
+sub smaller {
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] < $_[1]->[$stat_map{'size'}] }, @_);
+}
+
+sub smallest {
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] >= $_[1]->[$stat_map{'size'}] }, @_);
 }
 
 sub _construct_filename {
