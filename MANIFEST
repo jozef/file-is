@@ -1,7 +1,9 @@
 Build.PL
 Changes
 lib/File/is.pm
+Makefile.PL
 MANIFEST
+META.yml
 README
 t/00-load.t
 t/00_compile.t
@@ -14,5 +16,3 @@ t/perltidy.conf
 t/pod-coverage.t
 t/pod-spell.t
 t/pod.t
-Makefile.PL
-META.yml
