@@ -16,22 +16,22 @@ use strict;
 our $VERSION = '0.01';
 
 use Carp;
+use Readonly;
 
-our %stat_map = (
-    'dev'     => 0,
-    'ino'     => 1,
-    'mode'    => 2,
-    'nlink'   => 3,
-    'uid'     => 4,
-    'gid'     => 5,
-    'rdev'    => 6,
-    'size'    => 7,
-    'atime'   => 8,
-    'mtime'   => 9,
-    'ctime'   => 10,
-    'blksize' => 11,
-    'blocks'  => 12,
-);
+#my $stat_dev     = 0;
+#my $stat_mode    = 2;
+#my $stat_nlink   = 3;
+#my $stat_uid     = 4;
+#my $stat_gid     = 5;
+#my $stat_rdev    = 6;
+#my $stat_atime   = 8;
+#my $stat_ctime   = 10;
+#my $stat_blksize = 11;
+#my $stat_blocks  = 12;
+
+Readonly::Scalar my $stat_ino   => 1;
+Readonly::Scalar my $stat_size  => 7;
+Readonly::Scalar my $stat_mtime => 9;
 
 =head1 SYNOPSIS
 
@@ -116,41 +116,50 @@ size) compared to the rest of the passed filenames.
 =cut
 
 sub newer {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] > $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_mtime] > $_[1]->[$stat_mtime] }, @_);
 }
+
 sub newest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] <= $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_mtime] <= $_[1]->[$stat_mtime] }, @_);
 }
+
 sub older {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'mtime'}] < $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_mtime] < $_[1]->[$stat_mtime] }, @_);
 }
+
 sub oldest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'mtime'}] >= $_[1]->[$stat_map{'mtime'}] }, @_);
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_mtime] >= $_[1]->[$stat_mtime] }, @_);
 }
+
 sub similar {
     return shift->_cmp_stat(
         1,
         sub {
-            $_[0]->[$stat_map{'size'}] == $_[1]->[$stat_map{'size'}]
-            and $_[0]->[$stat_map{ 'mtime'}] == $_[1]->[$stat_map{'mtime'}]
+            $_[0]->[$stat_size] == $_[1]->[$stat_size]
+              and $_[0]->[$stat_mtime] == $_[1]->[$stat_mtime];
         },
         @_
     );
 }
+
 sub thesame {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'ino'}] == $_[1]->[$stat_map{'ino'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_ino] == $_[1]->[$stat_ino] }, @_);
 }
+
 sub bigger {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] > $_[1]->[$stat_map{'size'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_size] > $_[1]->[$stat_size] }, @_);
 }
+
 sub biggest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] <= $_[1]->[$stat_map{'size'}] }, @_);
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_size] <= $_[1]->[$stat_size] }, @_);
 }
+
 sub smaller {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_map{'size'}] < $_[1]->[$stat_map{'size'}] }, @_);
+    return shift->_cmp_stat(1, sub { $_[0]->[$stat_size] < $_[1]->[$stat_size] }, @_);
 }
+
 sub smallest {
-    return shift->_cmp_stat(0, sub { $_[0]->[$stat_map{'size'}] >= $_[1]->[$stat_map{'size'}] }, @_);
+    return shift->_cmp_stat(0, sub { $_[0]->[$stat_size] >= $_[1]->[$stat_size] }, @_);
 }
 
 =head1 INTERNALS
@@ -178,11 +187,10 @@ sub _construct_filename {
         if @_ == 0;
     
     return File::Spec->catfile(@{$_[0]})
-        if (@_ == 1) and (ref $_[0] eq 'ARRAY');
+        if ((@_ == 1) and (ref $_[0] eq 'ARRAY'));
     
     return File::Spec->catfile(@_);
 }
-
 
 =head2 _cmp_stat($class, $return_value_if_match, $cmp_function, $primary_filename, $other_filename, $other_filename2, ...)
 
@@ -195,27 +203,31 @@ sub _cmp_stat {
     my $class    = shift;
     my $return   = shift;
     my $cmp_func = shift;
-    my $file1 = _construct_filename(shift);
-    my @files = @_;
+    my $file1    = _construct_filename(shift);
+    my @files    = @_;
     
-    my @file1_stat = stat($file1);
+    my @file1_stat = stat $file1;
     croak 'file "'.$file1.'" not reachable'
         if not @file1_stat;
 
     foreach my $file (@files) {
         $file = _construct_filename($file);
-        my @file_stat = stat($file);
+        my @file_stat = stat $file;
         croak 'file "'.$file.'" not reachable'
             if not @file_stat;
-        
+
         # return success if condition is met
         return $return
             if $cmp_func->(\@file1_stat, \@file_stat);
     }
-    
+
     # no file was newer
     return not $return;
 }
+
+'sleeeeeeeeeeep';
+
+__END__
 
 =head1 AUTHOR
 
@@ -254,13 +266,7 @@ L<http://cpanratings.perl.org/d/File-is>
 
 L<http://search.cpan.org/dist/File-is>
 
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
-
-=head1 COPYRIGHT & LICENSE
+=head1 COPYRIGHT
 
 Copyright 2009 Jozef Kutej, all rights reserved.
 
@@ -269,5 +275,3 @@ under the same terms as Perl itself.
 
 
 =cut
-
-'sleeeeeeeeeeep';

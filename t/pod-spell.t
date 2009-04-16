@@ -17,5 +17,8 @@ add_stopwords(qw(
 	JSON
 	TBD
 	html
+	RT
+	CPAN
+	AnnoCPAN
 ));
 all_pod_files_spelling_ok();
