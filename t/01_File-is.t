@@ -4,7 +4,7 @@ use strict;
 use warnings;
 
 #use Test::More 'no_plan';
-use Test::More tests => 31;
+use Test::More tests => 33;
 use Test::Exception;
 
 use File::Temp 'tempdir';
@@ -102,10 +102,14 @@ sub main {
 	ok(!File::is->smallest($fn1, $fn3, $fn2), 'file1 is not the smallest of the three');
 	
 	# test thesame
+	ok(File::is->thesame($fn1, $fn1), 'file1 it self is thesame');
 	SKIP: {
-		skip 'link() failed - not working on this filesystem?', 2
-			if not link($fn1,$fn1.'_');
+		skip 'link() failed - not working on this filesystem?', 3
+			if not eval { link($fn1,$fn1.'_'); 1; };
+		skip 'symlink() failed - not working on this filesystem?', 3
+			if not eval { symlink($fn1,$fn1.'__'); 1; };
 		ok(File::is->thesame($fn1, $fn1.'_'), 'file1 is the same as file1_');
+		ok(File::is->thesame($fn1, $fn1.'__'), 'file1 is the same as file1_');
 		ok(!File::is->thesame($fn1, $fn2), 'file1 is not the same as file2');
 	}
 	

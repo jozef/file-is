@@ -1,5 +1,10 @@
 Revision history for File-is
 
+0.02    30 Jun 2010
+    * fixed the test for operating systems that doesn't support (sym)links
+    * removed dependency on Readonly
+    * using confess for exceptions
+
 0.01    Date/time
         First version, released on an unsuspecting world.
 

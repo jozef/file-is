@@ -2,7 +2,7 @@
 /blib
 /pm_to_blib
 /META.yml
-/README
+/MYMETA.yml
 /Makefile.PL
 /Build
 /_build

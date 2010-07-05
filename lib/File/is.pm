@@ -13,10 +13,9 @@ Version 0.01
 use warnings;
 use strict;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
-use Carp;
-use Readonly;
+use Carp 'confess';
 use File::Spec;
 
 #my $stat_dev     = 0;
@@ -30,9 +29,9 @@ use File::Spec;
 #my $stat_blksize = 11;
 #my $stat_blocks  = 12;
 
-Readonly::Scalar my $stat_ino   => 1;
-Readonly::Scalar my $stat_size  => 7;
-Readonly::Scalar my $stat_mtime => 9;
+my $stat_ino   = 1;
+my $stat_size  = 7;
+my $stat_mtime = 9;
 
 =head1 SYNOPSIS
 
@@ -184,7 +183,7 @@ This function is called on every argument passed to cmp methods
 =cut
 
 sub _construct_filename {
-    croak 'need at least one argument'
+    confess 'need at least one argument'
         if @_ == 0;
     
     return File::Spec->catfile(@{$_[0]})
@@ -208,13 +207,13 @@ sub _cmp_stat {
     my @files    = @_;
     
     my @file1_stat = stat $file1;
-    croak 'file "'.$file1.'" not reachable'
+    confess 'file "'.$file1.'" not reachable'
         if not @file1_stat;
 
     foreach my $file (@files) {
         $file = _construct_filename($file);
         my @file_stat = stat $file;
-        croak 'file "'.$file.'" not reachable'
+        confess 'file "'.$file.'" not reachable'
             if not @file_stat;
 
         # return success if condition is met
@@ -269,12 +268,16 @@ L<http://search.cpan.org/dist/File-is>
 
 =back
 
-=head1 COPYRIGHT
+=head1 LICENSE AND COPYRIGHT
 
-Copyright 2009 Jozef Kutej, all rights reserved.
+Copyright 2010 jkutej@cpan.org
 
 This program is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself.
+under the terms of either: the GNU General Public License as published
+by the Free Software Foundation; or the Artistic License.
+
+See http://dev.perl.org/licenses/ for more information.
 
 
 =cut
+

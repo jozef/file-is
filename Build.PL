@@ -9,7 +9,6 @@ my $builder = Module::Build->new(
     dist_version_from   => 'lib/File/is.pm',
     requires => {
         'Carp'       => 0,
-        'Readonly'   => 0,
         'File::Spec' => 0,
     },
     build_requires => {
