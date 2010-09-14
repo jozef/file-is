@@ -141,7 +141,7 @@ sub similar {
 }
 
 sub thesame {
-    die 'unsupported on MSWin32 (see http://perlmonks.org/?node_id=859612)'
+    confess 'unsupported on MSWin32 (see http://perlmonks.org/?node_id=859612)'
         if $^O eq 'MSWin32';
     
     return shift->_cmp_stat(1, sub {
