@@ -20,5 +20,8 @@ add_stopwords(qw(
 	RT
 	CPAN
 	AnnoCPAN
+	IRC
+	blog
+	dev
 ));
 all_pod_files_spelling_ok();

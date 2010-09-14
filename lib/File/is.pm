@@ -4,21 +4,16 @@ package File::is;
 
 File::is - file is older? oldest? is newer? newest? similar? the same?
 
-=head1 VERSION
-
-Version 0.01
-
 =cut
 
 use warnings;
 use strict;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Carp 'confess';
 use File::Spec;
 
-#my $stat_dev     = 0;
 #my $stat_mode    = 2;
 #my $stat_nlink   = 3;
 #my $stat_uid     = 4;
@@ -29,6 +24,7 @@ use File::Spec;
 #my $stat_blksize = 11;
 #my $stat_blocks  = 12;
 
+my $stat_dev   = 0;
 my $stat_ino   = 1;
 my $stat_size  = 7;
 my $stat_mtime = 9;
@@ -90,8 +86,10 @@ time-stamp than any of the rest of the passed filenames.
 
 =head2 thesame($primary_filename, $other_filename, $other_filename2, ...)
 
-Returns true/false if the C<$primary_filename> has the same inode (is hard link)
-to any of the rest of the passed filenames.
+Returns true/false if the C<$primary_filename> has the same inode and dev
+(is hard link) to any of the rest of the passed filenames.
+
+NOTE: see L<http://perlmonks.org/?node_id=859612>, L<File::Same>
 
 =head2 bigger($primary_filename, $other_filename, $other_filename2, ...)
 
@@ -143,7 +141,13 @@ sub similar {
 }
 
 sub thesame {
-    return shift->_cmp_stat(1, sub { $_[0]->[$stat_ino] == $_[1]->[$stat_ino] }, @_);
+    die 'unsupported on MSWin32 (see http://perlmonks.org/?node_id=859612)'
+        if $^O eq 'MSWin32';
+    
+    return shift->_cmp_stat(1, sub {
+        ($_[0]->[$stat_ino] == $_[1]->[$stat_ino])
+        && ($_[0]->[$stat_dev] == $_[1]->[$stat_dev])
+    }, @_);
 }
 
 sub bigger {
@@ -229,9 +233,22 @@ sub _cmp_stat {
 
 __END__
 
+=head1 SEE ALSO
+
+L<http://perldoc.perl.org/functions/stat.html>
+
 =head1 AUTHOR
 
 Jozef Kutej, C<< <jkutej at cpan.org> >>
+
+=head1 CONTRIBUTORS
+ 
+The following people have contributed to the File::is by committing their
+code, sending patches, reporting bugs, asking questions, suggesting useful
+advises, nitpicking, chatting on IRC or commenting on my blog (in no particular
+order):
+
+    Ronald Fischer
 
 =head1 BUGS
 

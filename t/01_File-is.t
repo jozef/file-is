@@ -102,15 +102,27 @@ sub main {
 	ok(!File::is->smallest($fn1, $fn3, $fn2), 'file1 is not the smallest of the three');
 	
 	# test thesame
-	ok(File::is->thesame($fn1, $fn1), 'file1 it self is thesame');
-	SKIP: {
-		skip 'link() failed - not working on this filesystem?', 3
-			if not eval { link($fn1,$fn1.'_'); 1; };
-		skip 'symlink() failed - not working on this filesystem?', 3
-			if not eval { symlink($fn1,$fn1.'__'); 1; };
-		ok(File::is->thesame($fn1, $fn1.'_'), 'file1 is the same as file1_');
-		ok(File::is->thesame($fn1, $fn1.'__'), 'file1 is the same as file1_');
-		ok(!File::is->thesame($fn1, $fn2), 'file1 is not the same as file2');
+	eval {
+		ok(File::is->thesame($fn1, $fn1), 'file1 it self is thesame');
+	};
+	if ($@) {
+		# rethrow if it is not error about MSWin32
+		die $@
+			if ($@ !~ m/MSWin32/);
+		SKIP: {
+			skip 'File::is->thesame does not work on MSWin32', 4;
+		}
+	}
+	else {
+		SKIP: {
+			skip 'link() failed - not working on this filesystem?', 3
+				if not eval { link($fn1,$fn1.'_'); 1; };
+			skip 'symlink() failed - not working on this filesystem?', 3
+				if not eval { symlink($fn1,$fn1.'__'); 1; };
+			ok(File::is->thesame($fn1, $fn1.'_'), 'file1 is the same as file1_');
+			ok(File::is->thesame($fn1, $fn1.'__'), 'file1 is the same as file1_');
+			ok(!File::is->thesame($fn1, $fn2), 'file1 is not the same as file2');
+		}
 	}
 	
 	return 0;

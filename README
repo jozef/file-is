@@ -1,9 +1,6 @@
 NAME
     File::is - file is older? oldest? is newer? newest? similar? the same?
 
-VERSION
-    Version 0.01
-
 SYNOPSIS
         use File::is;
 
@@ -52,8 +49,10 @@ FUNCTIONS
     modification time-stamp than any of the rest of the passed filenames.
 
   thesame($primary_filename, $other_filename, $other_filename2, ...)
-    Returns true/false if the `$primary_filename' has the same inode (is
-    hard link) to any of the rest of the passed filenames.
+    Returns true/false if the `$primary_filename' has the same inode and dev
+    (is hard link) to any of the rest of the passed filenames.
+
+    NOTE: see http://perlmonks.org/?node_id=859612, File::Same
 
   bigger($primary_filename, $other_filename, $other_filename2, ...)
     Returns true/false if the `$primary_filename' is bigger (has the bigger
@@ -92,8 +91,19 @@ INTERNALS
     This function is called by all of the public `newer()', `smaller()',
     `older()', ... methods do loop through files and do some cmp on them.
 
+SEE ALSO
+    http://perldoc.perl.org/functions/stat.html
+
 AUTHOR
     Jozef Kutej, `<jkutej at cpan.org>'
+
+CONTRIBUTORS
+    The following people have contributed to the File::is by committing
+    their code, sending patches, reporting bugs, asking questions,
+    suggesting useful advises, nitpicking, chatting on IRC or commenting on
+    my blog (in no particular order):
+
+        Ronald Fischer
 
 BUGS
     Please report any bugs or feature requests to `bug-file-is at
